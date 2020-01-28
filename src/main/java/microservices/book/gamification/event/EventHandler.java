@@ -19,7 +19,7 @@ public class EventHandler {
         this.gameService = gameService;
     }
 
-    @RabbitListener(queues = "${multiplication.queue")
+    @RabbitListener(queues = "${multiplication.queue}")
     void handleMultiplicationSolved(final MultiplicationSolvedEvent event) { // 메시지 컨버터에서 JSON을 객체로 역직렬화
         log.info("Multiplication Solved Event 수신: {}", event.getMultiplicationResultAttemptId());
 

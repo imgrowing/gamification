@@ -5,10 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 /**
  * 배지와 사용자를 연결하는 클래스
@@ -35,7 +32,7 @@ public final class BadgeCard {
 		this(null, null, 0L, null);
 	}
 
-	public BadgeCard(final Long userId, final Badge bagde) {
-		this(null, userId, System.currentTimeMillis(), bagde);
+	public BadgeCard(final Long userId, final Badge badge) {
+		this(null, userId, System.currentTimeMillis(), badge);
 	}
 }

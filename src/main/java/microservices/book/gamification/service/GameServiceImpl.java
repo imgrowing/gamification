@@ -1,19 +1,19 @@
 package microservices.book.gamification.service;
 
 import lombok.extern.slf4j.Slf4j;
+import microservices.book.gamification.client.MultiplicationResultAttemptClient;
+import microservices.book.gamification.client.dto.MultiplicationResultAttempt;
 import microservices.book.gamification.domain.Badge;
 import microservices.book.gamification.domain.BadgeCard;
 import microservices.book.gamification.domain.GameStats;
 import microservices.book.gamification.domain.ScoreCard;
 import microservices.book.gamification.repository.BadgeCardRepository;
 import microservices.book.gamification.repository.ScoreCardRepository;
-import org.aspectj.weaver.BCException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -21,12 +21,19 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 public class GameServiceImpl implements GameService {
 
+	public final int LUCKY_NUMBER = 42;
 	private ScoreCardRepository scoreCardRepository;
 	private BadgeCardRepository badgeCardRepository;
+	private MultiplicationResultAttemptClient attemptClient;
 
-	GameServiceImpl(ScoreCardRepository scoreCardRepository, BadgeCardRepository badgeCardRepository) {
+	GameServiceImpl(
+			ScoreCardRepository scoreCardRepository,
+			BadgeCardRepository badgeCardRepository,
+			MultiplicationResultAttemptClient attemptClient
+	) {
 		this.scoreCardRepository = scoreCardRepository;
 		this.badgeCardRepository = badgeCardRepository;
+		this.attemptClient = attemptClient;
 	}
 
 	@Override
@@ -63,6 +70,8 @@ public class GameServiceImpl implements GameService {
 
 		List<ScoreCard> scoreCardList = scoreCardRepository.findByUserIdOrderByScoreTimestampDesc(userId);
 		List<BadgeCard> badgeCardList = badgeCardRepository.findByUserIdOrderByBadgeTimestampDesc(userId);
+		log.info("BADGE CARD Count : {}", badgeCardList.size());
+		badgeCardList.forEach(badgeCard -> log.info("BADGE CARD: {}" + badgeCard));
 
 		// 점수 기반 배지
 		checkAndGiveBadgeBasedOnScore(badgeCardList, Badge.BRONZE_MULTIPLICATOR, totalScore, 100, userId)
@@ -76,6 +85,15 @@ public class GameServiceImpl implements GameService {
 		if (scoreCardList.size() == 1 && !containsBadge(badgeCardList, Badge.FIRST_WON)) {
 			BadgeCard firstWonBadge = giveBadgeToUser(Badge.FIRST_WON, userId);
 			badgeCards.add(firstWonBadge);
+		}
+
+		// 행운의 숫자 배지
+		if (!containsBadge(badgeCardList, Badge.LUCKY_NUMBER)) {
+			MultiplicationResultAttempt attempt = attemptClient.retrieveMultiplicationResultAttemptById(attemptId);
+			if (attempt.getMultiplicationFactorA() == LUCKY_NUMBER || attempt.getMultiplicationFactorB() == LUCKY_NUMBER) {
+				BadgeCard luckyBadgeCard = giveBadgeToUser(Badge.LUCKY_NUMBER, userId);
+				badgeCards.add(luckyBadgeCard);
+			}
 		}
 
 		return badgeCards;
